@@ -28,9 +28,13 @@ app.get('/Coord/:lat/:lng', (async (req, res) => {
         const resp = await fetch(urlSigPac, {
             method: 'GET'
         });
-        const data = (await resp.json())
-        console.log(data);
-        res.send(200);
+        const data = (await resp.json()).features;
+        const point = LatLng2XY(lat, lng);
+        let result = data?.filter(d => {
+            var pol = d.geometry.coordinates;
+            return isPointInsidePolygon(point, pol)
+        }) || []
+        res.send(JSON.stringify(result));
 
     } catch (err) {
         console.log(err);
@@ -162,9 +166,9 @@ var isPointInsidePolygon = function (punto, poligono) {
     return inside;
 };
 
-var LatLng2XY = function (latlng) {
-    var y = Math.log(Math.tan(Math.PI / 4 + (latlng.lat * Math.PI) / 360)) * 6378137;
-    var x = (latlng.lng / 180) * 6378137 * Math.PI;
+var LatLng2XY = function (lat, lng) {
+    var y = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * 6378137;
+    var x = (lng / 180) * 6378137 * Math.PI;
     return { x: x, y: y }
 }
 
