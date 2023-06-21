@@ -13,7 +13,46 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+//https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/46/182/0/0/1/1.geojson
+//https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/municipiobox/46/181.geojson
 
+app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
+    let provinciaId = req.params.provinciaId;
+    let municipioId = req.params.municipioId;
+
+    const urlSigPac = `https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/municipiobox/${provinciaId}/${municipioId}.geojson`
+    try {
+        const resp = await fetch(urlSigPac, {
+            method: 'GET'
+        });
+        const data = (await resp.json()).features;
+        res.send(data);
+    } catch (err) {
+        console.log(err);
+        res.send('ERROR')
+    }
+
+}))
+
+app.get('/Parcela/:provinciaId/:municipioId/:poligono/:parcela', (async (req, res) => {
+    let provinciaId = req.params.provinciaId;
+    let municipioId = req.params.municipioId;
+    let poligono = req.params.poligono;
+    let parcela = req.params.parcela;
+
+    const urlSigPac = `https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/${provinciaId}/${municipioId}/0/0/${poligono}/${parcela}.geojson`
+    try {
+        const resp = await fetch(urlSigPac, {
+            method: 'GET'
+        });
+        const data = (await resp.json()).features;
+        res.send(data);
+    } catch (err) {
+        console.log(err);
+        res.send('ERROR')
+    }
+
+}))
 
 app.get('/Coord/:lat/:lng', (async (req, res) => {
     //https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.16377.20234.geojson
