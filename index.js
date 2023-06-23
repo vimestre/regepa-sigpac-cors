@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require("body-parser");
 const FormData = require('form-data');
 const fetch = require("node-fetch");
-const crypto = require('crypto');
+//const crypto = require('crypto');
 
 
 
@@ -18,21 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 //https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/46/182/0/0/1/1.geojson
 //https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/municipiobox/46/181.geojson
 
-let urls = [];
 
-app.post('/Short', (req, res) => {
-    //console.log(req.body);
-    let uuid = crypto.randomUUID();
-    urls.push({ uuid: uuid, url: req.body.url, time: new Date() });
-    res.send(JSON.stringify({ uuid: uuid }));
-})
-
-app.get('/Contrato/:uuid', (req, res) => {
-    let uuid = req.params.uuid;
-    let cache = urls.find(u => u.uuid === uuid)
-    if (cache) res.redirect(cache.url);
-    else res.send('ERROR')
-})
 
 app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
     let provinciaId = req.params.provinciaId;
