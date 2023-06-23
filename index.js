@@ -3,6 +3,8 @@ const cors = require('cors');
 const bodyParser = require("body-parser");
 const FormData = require('form-data');
 const fetch = require("node-fetch");
+const crypto = require('crypto');
+
 
 
 
@@ -15,6 +17,18 @@ app.use(express.urlencoded({ extended: true }));
 
 //https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/46/182/0/0/1/1.geojson
 //https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/municipiobox/46/181.geojson
+
+let urls = [];
+
+app.post('/Short', (req, res) => {
+    this.urls.push({ uuid: crypto.randomUUID(), url: req.body.data });
+})
+
+app.get('/Contrato/:uuid', (req, res) => {
+    let uuid = req.params.uuid;
+    let cache = this.urls.find(u => u.uuid === uuid)
+    res.redirect(cache.url);
+})
 
 app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
     let provinciaId = req.params.provinciaId;
@@ -32,6 +46,25 @@ app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
         res.send('ERROR')
     }
 
+}))
+
+app.get('/ParcelasSigpac/:x/:y', (async (req, res) => {
+    let x = req.params.x;
+    let y = req.params.y;
+    console.log('hola')
+
+    const urlSigPac = `https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.${x}.${y}.geojson`
+    try {
+        const resp = await fetch(urlSigPac, {
+            method: 'GET'
+        });
+        const data = (await resp.json());
+        console.log(data);
+        res.send(JSON.stringify(data));
+    } catch (err) {
+        console.log(err);
+        res.send('ERROR')
+    }
 }))
 
 app.get('/Parcela/:provinciaId/:municipioId/:poligono/:parcela', (async (req, res) => {
