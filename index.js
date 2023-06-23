@@ -21,12 +21,15 @@ app.use(express.urlencoded({ extended: true }));
 let urls = [];
 
 app.post('/Short', (req, res) => {
-    this.urls.push({ uuid: crypto.randomUUID(), url: req.body.data, time: new Date() });
+    //console.log(req.body);
+    let uuid = crypto.randomUUID();
+    urls.push({ uuid: uuid, url: req.body.url, time: new Date() });
+    res.send(JSON.stringify({ uuid: uuid }));
 })
 
 app.get('/Contrato/:uuid', (req, res) => {
     let uuid = req.params.uuid;
-    let cache = this.urls.find(u => u.uuid === uuid)
+    let cache = urls.find(u => u.uuid === uuid)
     if (cache) res.redirect(cache.url);
     else res.send('ERROR')
 })
