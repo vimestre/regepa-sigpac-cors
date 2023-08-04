@@ -3,21 +3,12 @@ const cors = require('cors');
 const bodyParser = require("body-parser");
 const FormData = require('form-data');
 const fetch = require("node-fetch");
-//const crypto = require('crypto');
-
-
-
-
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
-
-//https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/46/182/0/0/1/1.geojson
-//https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/municipiobox/46/181.geojson
-
 
 
 app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
@@ -259,6 +250,5 @@ var LatLng2IJ = function (lat, lng) {
 }
 
 var server = app.listen(88, function () {
-    //app.use(cors())
     console.log("El servidor funciona en el puerto 80");
 });
