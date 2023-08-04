@@ -10,7 +10,7 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-
+//Devuelve el BoindingBox (las coordenadas noroeste y sureste) del municipio proporcionado
 app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
     let provinciaId = req.params.provinciaId;
     let municipioId = req.params.municipioId;
@@ -29,128 +29,7 @@ app.get('/Municipio/:provinciaId/:municipioId', (async (req, res) => {
 
 }))
 
-app.get('/ParcelasSigpac/:x/:y', (async (req, res) => {
-    let x = req.params.x;
-    let y = req.params.y;
-    console.log('hola')
-
-    const urlSigPac = `https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.${x}.${y}.geojson`
-    try {
-        const resp = await fetch(urlSigPac, {
-            method: 'GET'
-        });
-        const data = (await resp.json());
-        console.log(data);
-        res.send(JSON.stringify(data));
-    } catch (err) {
-        console.log(err);
-        res.send('ERROR')
-    }
-}))
-
-app.get('/Parcela/:provinciaId/:municipioId/:poligono/:parcela', (async (req, res) => {
-    let provinciaId = req.params.provinciaId;
-    let municipioId = req.params.municipioId;
-    let poligono = req.params.poligono;
-    let parcela = req.params.parcela;
-
-    const urlSigPac = `https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelabox/${provinciaId}/${municipioId}/0/0/${poligono}/${parcela}.geojson`
-    try {
-        const resp = await fetch(urlSigPac, {
-            method: 'GET'
-        });
-        const data = (await resp.json()).features;
-        res.send(data);
-    } catch (err) {
-        console.log(err);
-        res.send('ERROR')
-    }
-
-}))
-
-app.get('/Coord/:lat/:lng', (async (req, res) => {
-    //https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.16377.20234.geojson
-
-    let lat = req.params.lat;
-    let lng = req.params.lng;
-
-    var ij = LatLng2IJ(lat, lng);
-    const urlSigPac = `https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.${ij.i}.${ij.j}.geojson`;
-
-    try {
-        const resp = await fetch(urlSigPac, {
-            method: 'GET'
-        });
-        const data = (await resp.json()).features;
-
-        const point = LatLng2XY(lat, lng);
-        let result = data?.filter(d => {
-            var pol = d.geometry.coordinates;
-            return isPointInsidePolygon(point, pol)
-        }) || []
-
-        result.forEach(a => {
-            a.geometry.coordinates = a.geometry.coordinates.map(cc => cc.map(c => c = XYToLatLng(c)))
-        });
-
-        res.send(JSON.stringify(result));
-
-    } catch (err) {
-        console.log(err);
-        res.send('ERROR')
-    }
-}))
-
-app.get('/Parcelas/:ProvinciaId/:MunicipioId/:PoligonoId', (async (req, res) => {
-    const MunicipioId = req.params.MunicipioId;
-    const ProvinciaId = req.params.ProvinciaId;
-    const Poligono = req.params.PoligonoId;
-    const urlSigPac = `https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/parcelas/${ProvinciaId}/${MunicipioId}/0/0/${Poligono}.geojson`
-
-    try {
-        const resp = await fetch(urlSigPac, {
-            method: 'GET'
-        });
-
-        const data = (await resp.json()).features;
-        const result = [];
-        for (var i = 0; i < data.length; i++) {
-            result.push(data[i].properties)
-        }
-        res.send(JSON.stringify(result));
-
-    } catch (err) {
-        console.log(err)
-        res.send('ERROR');
-    }
-}));
-
-app.get('/Poligonos/:ProvinciaId/:MunicipioId', (async (req, res) => {
-    const MunicipioId = req.params.MunicipioId;
-    const ProvinciaId = req.params.ProvinciaId;
-    const urlSigPac = `https://sigpac.mapama.gob.es/fega/serviciosvisorsigpac/query/poligonos/${ProvinciaId}/${MunicipioId}/0/0.geojson`
-
-    try {
-        const resp = await fetch(urlSigPac, {
-            method: 'GET'
-        });
-
-        const data = (await resp.json()).features;
-        const result = [];
-        for (var i = 0; i < data.length; i++) {
-            result.push(data[i].properties)
-        }
-
-        res.send(JSON.stringify(result));
-
-    } catch (err) {
-        console.log(err)
-        res.send('ERROR');
-    }
-
-
-}));
-
+//Devuelve el código Regepa para el NIF proporcionado
 app.get('/Regepa/:NIF', (async (req, res) => {
 
     const urlRegepa = 'https://www.mapa.gob.es/app/regepa/ResBusCon.aspx?id=es'
@@ -185,7 +64,45 @@ app.get('/Regepa/:NIF', (async (req, res) => {
 
 }));
 
+//Devuelve la parcela a la que pertenecen las coordenadas proporcionadas
+app.get('/Coord/:lat/:lng', (async (req, res) => {
+    let lat = req.params.lat;
+    let lng = req.params.lng;
 
+    //Calculamos y obtenemos la "tesela a la que pertenecen las coordenadas"
+    var ij = LatLng2IJ(lat, lng);
+    const urlSigPac = `https://sigpac.mapama.gob.es/vectorsdg/vector/parcela@3857/15.${ij.i}.${ij.j}.geojson`;
+
+    try {
+        const resp = await fetch(urlSigPac, {
+            method: 'GET'
+        });
+        const data = (await resp.json()).features;
+
+        //Convertimos las coordenadas al sistema utlizado por SigPac y filtramos las parcela que contengan las coordenadas
+        const point = LatLng2XY(lat, lng);
+        let result = data?.filter(d => {
+            isPointInsidePolygon(point, d.geometry.coordinates)
+        }) || []
+
+        //Convertimos el resultado al sistema de lat y lng
+        result?.forEach(a => {
+            a.geometry.coordinates = a.geometry.coordinates.map(cc => cc.map(c => c = XYToLatLng(c)))
+        });
+
+        res.send(JSON.stringify(result));
+
+    } catch (err) {
+        console.log(err);
+        res.send('ERROR')
+    }
+}))
+
+
+
+//FUNCIONES AUXILIARES
+
+//Comprueba si el punto pertenece a un polígono
 var isPointInsidePolygon = function (punto, poligono) {
     var x = punto.x, y = punto.y;
 
@@ -203,7 +120,7 @@ var isPointInsidePolygon = function (punto, poligono) {
 
         if (intersect) inside = !inside;
     }
-
+    //El polígono puede tener agujeros, hay que comprobar que el punto no esté en un agujero
     if (inside) {
         for (var k = 1; k < poligono.length; k++) {
 
@@ -225,12 +142,14 @@ var isPointInsidePolygon = function (punto, poligono) {
     return inside;
 };
 
+//Convierte LatLng al crs usado por sigpac
 var LatLng2XY = function (lat, lng) {
     var y = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * 6378137;
     var x = (lng / 180) * 6378137 * Math.PI;
     return { x: x, y: y }
 }
 
+//Convierte el crs usado por sigpac a LatLng
 var XYToLatLng = function (xy) {
     //console.log(xy);
     var lat = (180 / Math.PI) * (Math.atan(Math.exp(xy[1] / 6378137)) * 2 - Math.PI / 2);
@@ -239,6 +158,7 @@ var XYToLatLng = function (xy) {
     return [lng, lat];
 }
 
+//Obtiene los IJ (Sistema de teselación de Sigpac) al que pertenece el putno LatLng
 var LatLng2IJ = function (lat, lng) {
     var y = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * 6378137;
     var x = (lng / 180) * 6378137 * Math.PI;
